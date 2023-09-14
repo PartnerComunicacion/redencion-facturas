@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
@@ -13,53 +11,44 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Icons } from '@/components/icons';
+import { useSession } from 'next-auth/react';
+import { redirect, useRouter } from 'next/navigation';
 
 type Inputs = z.infer<typeof onboardingSchema>;
 
 export function OnboardingForm() {
 	const { toast } = useToast();
 	const router = useRouter();
-	const [isLoading, setIsLoading] = useState(false);
+	const { status, update } = useSession();
 
 	const form = useForm<Inputs>({
 		resolver: zodResolver(onboardingSchema),
 		defaultValues: {
 			name: '',
 			lastName: '',
-			documentType: 'Cédula de ciudadanía',
+			idType: 'Cédula de ciudadanía',
 			id: '',
 			phone: '',
 		},
 	});
 
 	async function onSubmit(data: Inputs) {
-		setIsLoading(true);
 		try {
-			//   await signUp(data.email, data.password);
-			await new Promise((resolve) => setTimeout(resolve, 1000));
 			console.log(data);
-			form.reset();
-			//   router.push("/agregar-datos");
-		} catch (error) {
-			const firebaseError = error as { code?: string };
+			update({
+				name: data.name,
+				lastName: data.lastName,
+				idType: data.idType,
+				personalId: data.id,
+				phone: data.phone,
+			});
 
-			switch (firebaseError.code) {
-				case 'auth/email-already-in-use':
-					toast({
-						variant: 'destructive',
-						title: 'Error',
-						description: 'Este correo ya está registrado',
-					});
-					break;
-				default:
-					toast({
-						variant: 'destructive',
-						title: 'Error',
-						description: 'Ocurrió un error al iniciar sesión',
-					});
-			}
-		} finally {
-			setIsLoading(false);
+			router.push('/registro');
+		} catch (error) {
+			toast({
+				variant: 'destructive',
+				title: `${error}`,
+			});
 		}
 	}
 
@@ -95,7 +84,7 @@ export function OnboardingForm() {
 
 				<FormField
 					control={form.control}
-					name="documentType"
+					name="idType"
 					render={({ field }) => (
 						<FormItem>
 							<FormLabel>Selecciona el tipo de documento</FormLabel>
@@ -145,8 +134,8 @@ export function OnboardingForm() {
 					)}
 				/>
 
-				<Button disabled={isLoading}>
-					{isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+				<Button disabled={status === 'loading'}>
+					{status === 'loading' && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
 					Continuar
 					<span className="sr-only">Continúa para la página de verificación de correo</span>
 				</Button>

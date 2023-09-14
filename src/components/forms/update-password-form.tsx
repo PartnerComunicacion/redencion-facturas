@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
@@ -12,13 +11,20 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Icons } from '@/components/icons';
 import { PasswordInput } from '@/components/password-input';
+import { useSession } from 'next-auth/react';
+import { trpc } from '@/lib/trpc/client';
+import { UpdatePasswordSkeleton } from '@/components/skeletons/update-password-skeleton';
 
 type Inputs = z.infer<typeof newPasswordSchema>;
 
 export function UpdatePasswordForm() {
 	const { toast } = useToast();
-	const router = useRouter();
-	const [isLoading, setIsLoading] = useState(false);
+	const { data: session, status, update } = useSession();
+	const email = session?.user?.email as string;
+	const { data, isLoading } = trpc.user.getUserByEmail.useQuery({ email: email }, { enabled: status === 'authenticated' && !!email });
+	const mutationHashPassword = trpc.password.hashPassword.useMutation();
+	const mutationUpdatePassword = trpc.password.updatePassword.useMutation();
+	const [isUpdating, setIsUpdating] = useState(false);
 
 	const form = useForm<Inputs>({
 		resolver: zodResolver(newPasswordSchema),
@@ -29,85 +35,107 @@ export function UpdatePasswordForm() {
 		},
 	});
 
-	async function onSubmit(data: Inputs) {
-		setIsLoading(true);
-		try {
-			//   await signUp(data.email, data.password);
-			await new Promise((resolve) => setTimeout(resolve, 1000));
-			console.log(data);
-			form.reset();
-			//   router.push("/agregar-datos");
-		} catch (error) {
-			const firebaseError = error as { code?: string };
+	async function onSubmit(formData: Inputs) {
+		setIsUpdating(true);
 
-			switch (firebaseError.code) {
-				case 'auth/email-already-in-use':
+		const { password, newPassword } = formData;
+
+		if (!data || !data.email) return;
+
+		const { email } = data;
+
+		try {
+			const isMatch = await mutationHashPassword.mutateAsync({ email, password });
+
+			if (isMatch) {
+				try {
+					await mutationUpdatePassword.mutateAsync({ email, password: newPassword });
+
+					toast({
+						title: 'Contraseña actualizada exitosamente',
+					});
+				} catch (error) {
 					toast({
 						variant: 'destructive',
-						title: 'Error',
-						description: 'Este correo ya está registrado',
+						title: `${error}`,
 					});
-					break;
-				default:
-					toast({
-						variant: 'destructive',
-						title: 'Error',
-						description: 'Ocurrió un error al iniciar sesión',
-					});
+				}
+			} else {
+				toast({
+					variant: 'destructive',
+					title: 'La contraseña es incorrecta',
+				});
 			}
+		} catch (error) {
+			console.log(error);
+			toast({
+				variant: 'destructive',
+				title: `${error}`,
+			});
 		} finally {
-			setIsLoading(false);
+			form.reset();
+			setIsUpdating(false);
 		}
 	}
 
 	return (
 		<Form {...form}>
-			<form className="grid gap-4" onSubmit={(...args) => void form.handleSubmit(onSubmit)(...args)}>
-				<FormField
-					control={form.control}
-					name="password"
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel>Contraseña actual</FormLabel>
-							<FormControl>
-								<PasswordInput placeholder="**********" {...field} />
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-				<FormField
-					control={form.control}
-					name="newPassword"
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel>Nueva contraseña</FormLabel>
-							<FormControl>
-								<PasswordInput placeholder="**********" {...field} />
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-				<FormField
-					control={form.control}
-					name="confirmNewPassword"
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel>Confirmar nueva contraseña</FormLabel>
-							<FormControl>
-								<PasswordInput placeholder="**********" {...field} />
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-				<Button className="w-fit" disabled={isLoading}>
-					{isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
-					Guardar cambios
-					<span className="sr-only">Guardar los cambios del perfil</span>
-				</Button>
-			</form>
+			{isUpdating ? (
+				<UpdatePasswordSkeleton />
+			) : (
+				<form className="grid gap-4" onSubmit={(...args) => void form.handleSubmit(onSubmit)(...args)}>
+					<FormField
+						disabled={isLoading}
+						control={form.control}
+						name="password"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Contraseña actual</FormLabel>
+								<FormControl>
+									<PasswordInput placeholder="**********" {...field} />
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+
+					<FormField
+						disabled={isLoading}
+						control={form.control}
+						name="newPassword"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Nueva contraseña</FormLabel>
+								<FormControl>
+									<PasswordInput placeholder="**********" {...field} />
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+
+					<FormField
+						disabled={isLoading}
+						control={form.control}
+						name="confirmNewPassword"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Confirmar nueva contraseña</FormLabel>
+								<FormControl>
+									<PasswordInput placeholder="**********" {...field} />
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+
+					<Button className="w-fit" disabled={isLoading}>
+						{isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+						Guardar cambios
+						<span className="sr-only">Guardar los cambios del perfil</span>
+					</Button>
+				</form>
+			)}
 		</Form>
 	);
 }

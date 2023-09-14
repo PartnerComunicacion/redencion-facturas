@@ -4,15 +4,14 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { Icons } from '@/components/icons';
 import { signOut } from 'next-auth/react';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 
-export default function SiteHeader() {
+export function SiteHeader() {
 	const { data: session, status } = useSession();
 	const router = useRouter();
-
-	console.log(session, status);
-	// if (status === 'loading') return <div>Cargando...</div>;
 
 	return (
 		<div className="fixed left-0 right-0 z-40 flex h-14 w-full items-center justify-between gap-4 border-b bg-background px-6 py-4 md:px-12">
@@ -21,21 +20,23 @@ export default function SiteHeader() {
 				<h1 className="text-2xl">Redeen</h1>
 			</Link>
 
-			{status === 'loading' ? (
-				<div>Cargando...</div>
-			) : session ? (
+			{session ? (
 				<Button
 					variant="outline"
 					onClick={() => {
 						signOut({
 							redirect: false,
 						});
-						// router.push('/inicio-sesion');
+						router.push('/');
 					}}
 				>
 					Cerrar sesión
 				</Button>
-			) : null}
+			) : (
+				<Button variant={'outline'} onClick={() => router.push('/inicio-sesion')}>
+					Iniciar sesión
+				</Button>
+			)}
 			{/* <UserNav email={user.email} /> */}
 		</div>
 	);

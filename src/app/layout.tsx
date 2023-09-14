@@ -5,7 +5,7 @@ import TrpcProvider from '@/context/Provider';
 import { AuthContextProvider } from '@/context/AuthProvider';
 
 import { Toaster } from '@/components/ui/toaster';
-import SiteHeader from '@/components/site-header';
+import { SiteHeader } from '@/components/site-header';
 
 const inter = Inter({ subsets: ['latin'] });
 

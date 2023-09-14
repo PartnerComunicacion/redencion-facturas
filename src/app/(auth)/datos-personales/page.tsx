@@ -1,11 +1,17 @@
-'use client';
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { OnboardingForm } from '@/components/forms/onboarding-form';
 import { Shell } from '@/components/shell';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { redirect } from 'next/navigation';
 
-export default function OnboardingPage() {
+export default async function OnboardingPage() {
+	const session = await getServerSession(authOptions);
+
+	if (session && session.user?.name) {
+		redirect('/perfil');
+	}
 	return (
 		<Shell className="mx-auto max-w-md">
 			<div className="flex w-full items-center justify-center">

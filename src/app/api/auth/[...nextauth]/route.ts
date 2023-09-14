@@ -27,7 +27,7 @@ export const authOptions: NextAuthOptions = {
 					where: { email: credentials.email },
 				});
 
-				if (!user) return null;
+				if (!user || !user.password) return null;
 
 				const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
 
@@ -37,6 +37,62 @@ export const authOptions: NextAuthOptions = {
 			},
 		}),
 	],
+	callbacks: {
+		async jwt({ token, user, session, trigger }) {
+			// console.log('jwt callback', { token, user, session });
+
+			if (trigger === 'update' && session?.name) {
+				token.name = session.name;
+				token.lastName = session.lastName;
+				token.idType = session.idType;
+				token.personalId = session.personalId;
+				token.phone = session.phone;
+			}
+
+			if (user) {
+				return {
+					...token,
+					id: user.id,
+					name: user.name,
+					lastName: (user as any).lastName,
+					idType: (user as any).idType,
+					personalId: (user as any).personalId,
+					phone: (user as any).phone,
+				};
+			}
+
+			await prisma.user.update({
+				where: { id: token.id as string },
+				data: {
+					name: token.name,
+					lastName: token.lastName as string,
+					idType: token.idType as string,
+					personalId: token.personalId as string,
+					phone: token.phone as string,
+				},
+			});
+
+			return token;
+		},
+		async session({ session, token, user }) {
+			// console.log('session callback', { session, token, user });
+
+			return {
+				...session,
+				user: {
+					...session.user,
+					id: token.id,
+					name: token.name,
+					lastName: token.lastName,
+					idType: token.idType,
+					personalId: token.personalId,
+					phone: token.phone,
+				},
+			};
+
+			// return session;
+		},
+	},
 	session: {
 		strategy: 'jwt',
 	},

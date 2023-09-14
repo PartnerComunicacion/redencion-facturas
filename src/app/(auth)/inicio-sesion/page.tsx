@@ -1,12 +1,25 @@
-'use client';
-
 import Link from 'next/link';
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { SignInForm } from '@/components/forms/signIn-form';
 import { Shell } from '@/components/shell';
 
-export default function SignInPage() {
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { redirect } from 'next/navigation';
+
+export default async function SignInPage() {
+	const session = await getServerSession(authOptions);
+
+	if (session) {
+		if (!session.user?.name) {
+			redirect('/datos-personales');
+		}
+
+		console.log('Auth layout email', session.user?.name);
+
+		redirect('/perfil');
+	}
 	return (
 		<Shell className="mx-auto max-w-md">
 			<Card>

@@ -57,7 +57,7 @@ export const onboardingSchema = z.object({
 		.regex(/^[0-9]+$/, {
 			message: 'El número de celular solo debe contener dígitos, sin espacios',
 		}),
-	documentType: z.enum(['Cédula de ciudadanía', 'Pasaporte', 'Cédula extranjera'], {
+	idType: z.enum(['Cédula de ciudadanía', 'Pasaporte', 'Cédula extranjera'], {
 		required_error: 'Debes elegir un tipo de documento',
 	}),
 });

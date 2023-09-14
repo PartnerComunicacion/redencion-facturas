@@ -1,13 +1,26 @@
-'use client';
-
 import Link from 'next/link';
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { SignUpForm } from '@/components/forms/signUp-form';
 import { Shell } from '@/components/shell';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { redirect } from 'next/navigation';
 
-export default function SignUpPage() {
+export default async function SignUpPage() {
+	const session = await getServerSession(authOptions);
+
+	if (session) {
+		if (!session.user?.name) {
+			redirect('/datos-personales');
+		}
+
+		console.log('Auth layout email', session.user?.name);
+
+		redirect('/perfil');
+	}
+
 	return (
 		<Shell className="mx-auto max-w-md">
 			<div className="flex w-full items-center justify-center">

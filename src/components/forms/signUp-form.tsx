@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
@@ -13,13 +11,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Icons } from '@/components/icons';
 import { PasswordInput } from '@/components/password-input';
+import { signIn } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
+import { trpc } from '@/lib/trpc/client';
 
 type Inputs = z.infer<typeof signUpSchema>;
 
 export function SignUpForm() {
 	const { toast } = useToast();
-	const router = useRouter();
-	const [isLoading, setIsLoading] = useState(false);
+	const { status } = useSession();
+	const mutationRegister = trpc.register.userRegister.useMutation();
 
 	const form = useForm<Inputs>({
 		resolver: zodResolver(signUpSchema),
@@ -31,32 +32,34 @@ export function SignUpForm() {
 	});
 
 	async function onSubmit(data: Inputs) {
-		setIsLoading(true);
+		const { email, password } = data;
 
 		try {
-			const response = await fetch('/api/register', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ data }),
-			});
+			await mutationRegister.mutateAsync({ email, password });
 
-			if (!response.ok) {
-				const errorData = await response.json();
-				throw new Error(errorData.error);
-			}
+			// const response = await fetch('/api/register', {
+			// 	method: 'POST',
+			// 	headers: {
+			// 		'Content-Type': 'application/json',
+			// 	},
+			// 	body: JSON.stringify({ data }),
+			// });
+
+			// if (!response.ok) {
+			// 	const errorData = await response.json();
+			// 	throw new Error(errorData.error);
+			// }
+
+			signIn('credentials', { email, password, callbackUrl: '/datos-personales' });
 
 			form.reset();
-			// router.push("/agregar-datos");
+			// router.push('/datos-personales');
 		} catch (error) {
 			toast({
 				variant: 'destructive',
 				title: `${error}`,
 			});
 		}
-
-		setIsLoading(false);
 	}
 
 	return (
@@ -101,8 +104,8 @@ export function SignUpForm() {
 						</FormItem>
 					)}
 				/>
-				<Button disabled={isLoading}>
-					{isLoading && <Icons.spinner className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />}
+				<Button disabled={status === 'loading'}>
+					{status === 'loading' && <Icons.spinner className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />}
 					Continuar
 					<span className="sr-only">Continúa para la página de verificación de correo</span>
 				</Button>

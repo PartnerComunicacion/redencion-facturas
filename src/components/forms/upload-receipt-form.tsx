@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import type { FileWithPreview } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { generateReactHelpers } from '@uploadthing/react/hooks';
@@ -16,17 +15,22 @@ import { Input } from '@/components/ui/input';
 import { FileDialog } from '@/components/file-dialog';
 import { Icons } from '@/components/icons';
 import type { OurFileRouter } from '@/app/api/uploadthing/core';
+import { useSession } from 'next-auth/react';
+import { trpc } from '@/lib/trpc/client';
+import { isArrayOfFile } from '@/lib/utils';
 
 type Inputs = z.infer<typeof uploadReceiptSchema>;
 
 export function UploadReceiptForm() {
 	const { toast } = useToast();
+
+	const { data: session, status, update } = useSession();
+	const email = session?.user?.email as string;
+	const { data, isLoading } = trpc.user.getUserByEmail.useQuery({ email: email }, { enabled: status === 'authenticated' && !!email });
 	const { useUploadThing } = generateReactHelpers<OurFileRouter>();
-	const router = useRouter();
-	const [isLoading, setIsLoading] = useState(false);
 	const [files, setFiles] = useState<FileWithPreview[] | null>(null);
 	const { isUploading, startUpload } = useUploadThing('productImage');
-	const [isPending, startTransition] = useTransition();
+	const mutationUploadReceipt = trpc.receipts.addReceipt.useMutation();
 
 	const form = useForm<Inputs>({
 		resolver: zodResolver(uploadReceiptSchema),
@@ -36,35 +40,40 @@ export function UploadReceiptForm() {
 		},
 	});
 
-	async function onSubmit(data: Inputs) {
-		setIsLoading(true);
+	async function onSubmit(formData: Inputs) {
+		const { image, id, value } = formData;
+
 		try {
 			//   await signUp(data.email, data.password);
-			await new Promise((resolve) => setTimeout(resolve, 1000));
-			console.log(data);
+			const images = isArrayOfFile(image)
+				? await startUpload(image).then((res) => {
+						const formattedImages = res?.map((image) => ({
+							id: image.key,
+							name: image.key.split('_')[1] ?? image.key,
+							url: image.url,
+						}));
+						return formattedImages ?? null;
+				  })
+				: null;
+
+			if (images && data) {
+				const imageUrl = images[0].url;
+				await mutationUploadReceipt.mutateAsync({
+					userId: data?.id,
+					consecutive: id,
+					value: value,
+					imageUrl: imageUrl,
+				});
+			}
+
+			console.log(images);
 			form.reset();
 			setFiles(null);
-			//   router.push("/agregar-datos");
 		} catch (error) {
-			const firebaseError = error as { code?: string };
-
-			switch (firebaseError.code) {
-				case 'auth/email-already-in-use':
-					toast({
-						variant: 'destructive',
-						title: 'Error',
-						description: 'Este correo ya está registrado',
-					});
-					break;
-				default:
-					toast({
-						variant: 'destructive',
-						title: 'Error',
-						description: 'Ocurrió un error al iniciar sesión',
-					});
-			}
-		} finally {
-			setIsLoading(false);
+			toast({
+				variant: 'destructive',
+				title: `${error}`,
+			});
 		}
 	}
 
@@ -86,7 +95,7 @@ export function UploadReceiptForm() {
 									files={files}
 									setFiles={setFiles}
 									isUploading={isUploading}
-									disabled={isPending}
+									disabled={isUploading}
 								/>
 							</FormControl>
 							<FormMessage />
@@ -120,8 +129,7 @@ export function UploadReceiptForm() {
 					)}
 				/>
 				<Button className="w-fit" disabled={isLoading}>
-					{isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
-					<Icons.send className="mr-2 h-4 w-4" />
+					{isLoading ? <Icons.spinner className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <Icons.send className="mr-2 h-4 w-4" />}
 					Registrar factura
 					<span className="sr-only">Enviar mensaje con un error</span>
 				</Button>

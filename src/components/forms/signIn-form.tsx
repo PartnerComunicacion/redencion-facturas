@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
@@ -14,13 +12,13 @@ import { Input } from '@/components/ui/input';
 import { Icons } from '@/components/icons';
 import { PasswordInput } from '@/components/password-input';
 import { signIn } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 
 type Inputs = z.infer<typeof signInSchema>;
 
 export function SignInForm() {
 	const { toast } = useToast();
-	const [isLoading, setIsLoading] = useState(false);
-	const router = useRouter();
+	const { status } = useSession();
 
 	const form = useForm<Inputs>({
 		resolver: zodResolver(signInSchema),
@@ -31,21 +29,18 @@ export function SignInForm() {
 	});
 
 	async function onSubmit(data: Inputs) {
-		setIsLoading(true);
 		try {
 			// await new Promise((resolve) => setTimeout(resolve, 250));
-			signIn('credentials', { ...data, redirect: false });
+			signIn('credentials', { ...data, callbackUrl: '/perfil' });
 			console.log(data);
 			// form.reset();
-			// router.push('/perfil');
+			//router.push('/perfil');
 		} catch (error) {
 			toast({
 				variant: 'destructive',
 				title: `${error}`,
 			});
 		}
-
-		setIsLoading(false);
 	}
 
 	return (
@@ -77,8 +72,8 @@ export function SignInForm() {
 						</FormItem>
 					)}
 				/>
-				<Button disabled={isLoading}>
-					{isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+				<Button disabled={status === 'loading'}>
+					{status === 'loading' && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
 					Iniciar sesión
 					<span className="sr-only">Iniciar sesión</span>
 				</Button>
