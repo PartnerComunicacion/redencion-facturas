@@ -79,61 +79,65 @@ export function UploadReceiptForm() {
 
 	return (
 		<Form {...form}>
-			<form className="grid gap-4" onSubmit={(...args) => void form.handleSubmit(onSubmit)(...args)}>
-				<FormField
-					control={form.control}
-					name="image"
-					render={() => (
-						<FormItem>
-							<FormLabel>Foto de la factura</FormLabel>
-							<FormControl>
-								<FileDialog
-									setValue={form.setValue}
-									name="image"
-									maxFiles={1}
-									maxSize={1024 * 1024 * 4}
-									files={files}
-									setFiles={setFiles}
-									isUploading={isUploading}
-									disabled={isUploading}
-								/>
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-				<FormField
-					control={form.control}
-					name="id"
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel>Número de factura</FormLabel>
-							<FormControl>
-								<Input placeholder="Cosmocentro-123" {...field} />
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-				<FormField
-					control={form.control}
-					name="value"
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel>Valor total</FormLabel>
-							<FormControl>
-								<Input placeholder="10000" {...field} />
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-				<Button className="w-fit" disabled={isLoading}>
-					{isLoading ? <Icons.spinner className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <Icons.send className="mr-2 h-4 w-4" />}
-					Registrar factura
-					<span className="sr-only">Enviar mensaje con un error</span>
-				</Button>
-			</form>
+			{isLoading ? (
+				<div>Actualizando...</div>
+			) : (
+				<form className="grid gap-4" onSubmit={(...args) => void form.handleSubmit(onSubmit)(...args)}>
+					<FormField
+						control={form.control}
+						name="image"
+						render={() => (
+							<FormItem>
+								<FormLabel>Foto de la factura</FormLabel>
+								<FormControl>
+									<FileDialog
+										setValue={form.setValue}
+										name="image"
+										maxFiles={1}
+										maxSize={1024 * 1024 * 4}
+										files={files}
+										setFiles={setFiles}
+										isUploading={isUploading}
+										disabled={isUploading}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+					<FormField
+						control={form.control}
+						name="id"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Número de factura</FormLabel>
+								<FormControl>
+									<Input placeholder="Cosmocentro-123" {...field} />
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+					<FormField
+						control={form.control}
+						name="value"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Valor total</FormLabel>
+								<FormControl>
+									<Input placeholder="10000" {...field} />
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+					<Button className="w-fit" disabled={isLoading}>
+						{isLoading ? <Icons.spinner className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <Icons.send className="mr-2 h-4 w-4" />}
+						Registrar factura
+						<span className="sr-only">Enviar mensaje con un error</span>
+					</Button>
+				</form>
+			)}
 		</Form>
 	);
 }
