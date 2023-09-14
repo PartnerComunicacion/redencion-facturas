@@ -1,6 +1,7 @@
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { error } from 'console';
 import type { NextAuthOptions } from 'next-auth';
 import NextAuth from 'next-auth/next';
 import CredentialsProvider from 'next-auth/providers/credentials';
@@ -27,11 +28,16 @@ export const authOptions: NextAuthOptions = {
 					where: { email: credentials.email },
 				});
 
+				console.log(user);
+
 				if (!user || !user.password) return null;
 
 				const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
 
-				if (!isPasswordValid) return null;
+				if (!isPasswordValid) {
+					console.log('isPasswordValid', isPasswordValid);
+					return null;
+				}
 
 				return user;
 			},
@@ -100,7 +106,6 @@ export const authOptions: NextAuthOptions = {
 	debug: process.env.NODE_ENV === 'development',
 	pages: {
 		signIn: '/inicio-sesion',
-		error: '/api/auth/error',
 	},
 };
 

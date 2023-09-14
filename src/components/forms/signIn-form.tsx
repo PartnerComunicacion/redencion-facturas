@@ -13,14 +13,14 @@ import { Icons } from '@/components/icons';
 import { PasswordInput } from '@/components/password-input';
 import { signIn } from 'next-auth/react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 
 type Inputs = z.infer<typeof signInSchema>;
 
 export function SignInForm() {
 	const { toast } = useToast();
 	const { status } = useSession();
-	// const router = useRouter();
+	const router = useRouter();
 
 	const form = useForm<Inputs>({
 		resolver: zodResolver(signInSchema),
@@ -33,11 +33,22 @@ export function SignInForm() {
 	async function onSubmit(data: Inputs) {
 		try {
 			// await new Promise((resolve) => setTimeout(resolve, 250));
-			signIn('credentials', { ...data, callbackUrl: '/perfil', redirect: false });
-			console.log(data);
-			form.reset();
+			const result = await signIn('credentials', { ...data, callbackUrl: '/perfil', redirect: false });
+			// console.log(data);
+			// form.reset();
 			// router.push('/perfil');
+			if (result?.error) {
+				toast({
+					variant: 'destructive',
+					title: result.error,
+				});
+			} else {
+				// Si quieres redirigir al usuario después de un inicio de sesión exitoso, puedes hacerlo aquí.
+				// form.reset();
+				router.push('/perfil');
+			}
 		} catch (error) {
+			console.log(error);
 			toast({
 				variant: 'destructive',
 				title: `${error}`,
