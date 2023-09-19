@@ -4,10 +4,8 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { Icons } from '@/components/icons';
 import { signOut } from 'next-auth/react';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
 
 export function SiteHeader() {
 	const { data: session, status } = useSession();
@@ -37,7 +35,6 @@ export function SiteHeader() {
 					Iniciar sesión
 				</Button>
 			)}
-			{/* <UserNav email={user.email} /> */}
 		</div>
 	);
 }

@@ -19,7 +19,7 @@ type Inputs = z.infer<typeof newPasswordSchema>;
 
 export function UpdatePasswordForm() {
 	const { toast } = useToast();
-	const { data: session, status, update } = useSession();
+	const { data: session, status } = useSession();
 	const email = session?.user?.email as string;
 	const { data, isLoading } = trpc.user.getUserByEmail.useQuery({ email: email }, { enabled: status === 'authenticated' && !!email });
 	const mutationHashPassword = trpc.password.hashPassword.useMutation();

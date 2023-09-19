@@ -4,13 +4,13 @@ import { z } from 'zod';
 
 const prisma = new PrismaClient();
 
-const GetUserByEmailInput = z.object({
+const getUserByEmailInput = z.object({
 	email: z.string(),
 });
 
 export const userRouter = router({
-	getUserByEmail: publicProcedure.input(GetUserByEmailInput).query(async ({ input }) => {
-		const { email } = GetUserByEmailInput.parse(input);
+	getUserByEmail: publicProcedure.input(getUserByEmailInput).query(async ({ input }) => {
+		const { email } = getUserByEmailInput.parse(input);
 
 		if (!email) {
 			throw new Error('El email es requerido.');
