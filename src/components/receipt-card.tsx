@@ -34,7 +34,7 @@ export function ReceiptCard({ id, imageUrl, state, consecutive, value, userId }:
                 </div>
             </CardContent>
             <CardFooter>
-                <ReceiptImageDialog imageUrl={imageUrl} />
+                <ReceiptImageDialog consecutive={consecutive} imageUrl={imageUrl} />
             </CardFooter>
         </Card>
     );

@@ -30,6 +30,7 @@ export function UploadReceiptForm() {
 	const { useUploadThing } = generateReactHelpers<OurFileRouter>();
 	const [files, setFiles] = useState<FileWithPreview[] | null>(null);
 	const { isUploading, startUpload } = useUploadThing('productImage');
+	const [isUpdating, setIsUpdating] = useState(false);
 	const mutationUploadReceipt = trpc.receipts.addReceipt.useMutation();
 
 	const form = useForm<Inputs>({
@@ -43,17 +44,18 @@ export function UploadReceiptForm() {
 	async function onSubmit(formData: Inputs) {
 		const { image, id, value } = formData;
 
+		setIsUpdating(true);
+
 		try {
-			//   await signUp(data.email, data.password);
 			const images = isArrayOfFile(image)
 				? await startUpload(image).then((res) => {
-						const formattedImages = res?.map((image) => ({
-							id: image.key,
-							name: image.key.split('_')[1] ?? image.key,
-							url: image.url,
-						}));
-						return formattedImages ?? null;
-				  })
+					const formattedImages = res?.map((image) => ({
+						id: image.key,
+						name: image.key.split('_')[1] ?? image.key,
+						url: image.url,
+					}));
+					return formattedImages ?? null;
+				})
 				: null;
 
 			if (images && data) {
@@ -74,6 +76,8 @@ export function UploadReceiptForm() {
 				variant: 'destructive',
 				title: `${error}`,
 			});
+		} finally {
+			setIsUpdating(false);
 		}
 	}
 
@@ -84,6 +88,7 @@ export function UploadReceiptForm() {
 			) : (
 				<form className="grid gap-4" onSubmit={(...args) => void form.handleSubmit(onSubmit)(...args)}>
 					<FormField
+						disabled={isUpdating}
 						control={form.control}
 						name="image"
 						render={() => (
@@ -106,6 +111,7 @@ export function UploadReceiptForm() {
 						)}
 					/>
 					<FormField
+						disabled={isUpdating}
 						control={form.control}
 						name="id"
 						render={({ field }) => (
@@ -119,6 +125,7 @@ export function UploadReceiptForm() {
 						)}
 					/>
 					<FormField
+						disabled={isUpdating}
 						control={form.control}
 						name="value"
 						render={({ field }) => (
@@ -131,8 +138,8 @@ export function UploadReceiptForm() {
 							</FormItem>
 						)}
 					/>
-					<Button className="w-fit" disabled={isLoading}>
-						{isLoading ? <Icons.spinner className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <Icons.send className="mr-2 h-4 w-4" />}
+					<Button className="w-fit" disabled={isLoading || isUpdating}>
+						{isLoading || isUpdating ? <Icons.spinner className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <Icons.send className="mr-2 h-4 w-4" />}
 						Registrar factura
 						<span className="sr-only">Enviar mensaje con un error</span>
 					</Button>

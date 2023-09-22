@@ -20,9 +20,10 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface ReceiptImageDialogProps {
     imageUrl: string;
+    consecutive: string;
 }
 
-export function ReceiptImageDialog({ imageUrl }: ReceiptImageDialogProps) {
+export function ReceiptImageDialog({ imageUrl, consecutive }: ReceiptImageDialogProps) {
     const [loaded, setLoaded] = useState(false);
     return (
         <AlertDialog>
@@ -37,7 +38,7 @@ export function ReceiptImageDialog({ imageUrl }: ReceiptImageDialogProps) {
                 <AlertDialogHeader>
                     <AlertDialogTitle>
                         {/* {shortenString(numeroFactura)} */}
-                        Factura
+                        {consecutive}
                     </AlertDialogTitle>
                 </AlertDialogHeader>
                 <ScrollArea className="h-full rounded-md">
