@@ -69,7 +69,7 @@ export function FileDialog<TFieldValues extends FieldValues>({
 			}
 		},
 
-		[maxSize, name, setFiles, setValue]
+		[maxSize, name, setFiles, setValue, toast]
 	);
 
 	const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -86,7 +86,7 @@ export function FileDialog<TFieldValues extends FieldValues>({
 			if (!files) return;
 			files.forEach((file) => URL.revokeObjectURL(file.preview));
 		};
-	}, []);
+	}, [files]);
 
 	return (
 		<AlertDialog>
