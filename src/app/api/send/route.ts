@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
 		const data = await resend.emails.send({
 			from: 'Redención <not-reply@resend.dev>',
-			to: ['felipe.pedreros94@gmail.com'],
+			to: ['webmaster@partnercomunicacion.co'],
 			subject: 'Reporte de error',
 			react: EmailTemplate({ name: name, email: email, message: message }) as React.ReactElement,
 		});
